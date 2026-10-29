@@ -29,10 +29,10 @@ No Mac? Open **http://127.0.0.1:8787** for the web playground. It runs the same 
 ```
  Margin.app (Swift)           local backend (FastAPI)                    Nebius Token Factory
  ⌥Space → selected text  ──►  1. split into claims + write queries  ──►  Nemotron 3 Nano
- ⌥⇧Space → screenshot         0. image → text                       ──►  Nemotron 3 Nano Omni
+ ⌥⇧Space → screenshot         0. image → text                       ──►  Nemotron 3.5 Super VL
         ▲                     2. search to CONFIRM and to CHALLENGE ──►  Tavily /search (×2, parallel)
         │ live SSE events     3. read the best sources in full      ──►  Tavily /extract
-        └──────────────────   4. judge from the sources only        ──►  Nemotron 3 Super
+        └──────────────────   4. judge from the sources only        ──►  Nemotron 3 Ultra
                               5. drop any quote not found verbatim  (plain code, no model)
                               6. find the earliest dated coverage   ──►  Tavily /search (news)
 ```
@@ -54,11 +54,13 @@ We route each step to the right size of model, as the track suggests:
 
 | Step | Model | Why |
 |---|---|---|
-| Split claims, write confirm/challenge queries | Nemotron 3 Nano | Runs on every check and must be fast |
-| Read screenshots | Nemotron 3 Nano Omni | Multimodal: image to text |
-| Judge the evidence | Nemotron 3 Super | Careful reasoning over 6 sources |
+| Split claims, write confirm/challenge queries | Nemotron 3 Nano 30B | Runs on every check: 0.8s |
+| Read screenshots | Nemotron 3.5 Super VL | Vision: transcribes the claims, ignores UI chrome (2.4s) |
+| Judge the evidence | Nemotron 3 Ultra 550B | Strongest reasoning, for the step that decides the verdict |
 
-All calls go through Token Factory's OpenAI-compatible API (`https://api.tokenfactory.nebius.com/v1/`). Model IDs are auto-detected from the Token Factory model list, or can be pinned in `.env` (`MODEL_FAST`, `MODEL_JUDGE`, `MODEL_VISION`).
+We measured every step during the hackathon. With reasoning traces turned off (`enable_thinking: false`) and JSON mode on, Ultra judges six sources in about 1.2s, against 3 to 13s with traces on, and it never returned malformed JSON. Verdict quality held on our test set, so the biggest model also ended up being the fastest way to judge.
+
+All calls go through Token Factory's OpenAI-compatible API (`https://api.tokenfactory.nebius.com/v1/`). Model IDs are auto-detected from the Token Factory model list (Nano, Ultra, Super VL), or can be pinned in `.env` (`MODEL_FAST`, `MODEL_JUDGE`, `MODEL_VISION`).
 
 Token Factory sped us up because one OpenAI-compatible client covers three Nemotron sizes plus a vision model. Switching a step to a bigger or smaller model was a one-line change, so we could tune latency against quality during the hackathon.
 
