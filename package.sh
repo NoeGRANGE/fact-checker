@@ -7,6 +7,7 @@ BIN="$(cd macos && swift build -c release --arch arm64 --arch x86_64 --show-bin-
 APP=build/Margin.app
 rm -rf "$APP" build/Margin.zip && mkdir -p "$APP/Contents/MacOS"
 cp "$BIN" "$APP/Contents/MacOS/" && cp macos/Info.plist "$APP/Contents/"
+mkdir -p "$APP/Contents/Resources" && cp assets/AppIcon.icns "$APP/Contents/Resources/"
 codesign --force --sign - "$APP"
 (cd build && ditto -c -k --keepParent Margin.app Margin.zip)
 echo "build/Margin.zip ready"

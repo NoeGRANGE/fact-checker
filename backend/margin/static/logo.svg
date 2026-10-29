@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#23242c"/><stop offset="1" stop-color="#0d0e12"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
+  <rect x="65" y="65" width="894" height="894" rx="199" fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="3"/>
+  <!-- notebook margin rule -->
+  <line x1="318" y1="176" x2="318" y2="848" stroke="#ff70a3" stroke-width="10" stroke-linecap="round" opacity=".85"/>
+  <!-- the note written in the margin: a check -->
+  <path d="M186 512 L222 552 L282 462" fill="none" stroke="#ffe14d" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- lines of text -->
+  <g fill="#ecebe6" opacity=".2">
+    <rect x="378" y="316" width="400" height="30" rx="15"/>
+    <rect x="378" y="676" width="330" height="30" rx="15"/>
+    <rect x="378" y="772" width="380" height="30" rx="15"/>
+  </g>
+  <!-- highlighter: chisel-tip ends, two passes for a hand-made feel -->
+  <g transform="rotate(-4 590 510)">
+    <path d="M362 454 L826 446 L806 572 L346 580 Z" fill="#ffe14d"/>
+    <path d="M372 462 L818 456 L812 500 L366 508 Z" fill="#fff3a0" opacity=".35"/>
+    <rect x="404" y="496" width="356" height="32" rx="16" fill="#15161b"/>
+  </g>
+</svg>

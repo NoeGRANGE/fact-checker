@@ -16,6 +16,7 @@ if command -v swift >/dev/null; then
   rm -rf "$APP" && mkdir -p "$APP/Contents/MacOS"
   cp macos/.build/release/Margin "$APP/Contents/MacOS/"
   cp macos/Info.plist "$APP/Contents/"
+  mkdir -p "$APP/Contents/Resources" && cp assets/AppIcon.icns "$APP/Contents/Resources/"
   codesign --force --sign - "$APP" 2>/dev/null
 elif [ ! -d "$APP" ]; then
   echo "No Swift toolchain: install it with 'xcode-select --install', or put the prebuilt Margin.app from the GitHub release in ./build/"

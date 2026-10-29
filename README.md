@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo-256.png" width="128" alt="Margin logo"></p>
+
 # Margin
 
 **Highlight anything on your Mac. Margin tells you if it's true, and digs deeper when you want more.**

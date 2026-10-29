@@ -29,6 +29,11 @@ def playground():
     return FileResponse(STATIC / "index.html")
 
 
+@app.get("/logo.svg")
+def logo():
+    return FileResponse(STATIC / "logo.svg")
+
+
 @app.get("/health")
 async def health():
     return {"ok": True, "models": await resolve_models()}
