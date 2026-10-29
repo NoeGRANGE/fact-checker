@@ -25,12 +25,13 @@ MODELS = {
     "judge": os.environ.get("MODEL_JUDGE", ""),
     "vision": os.environ.get("MODEL_VISION", ""),
 }
-WANT = {"fast": ["nemotron", "nano"], "judge": ["nemotron", "super"], "vision": ["nemotron", "omni"]}
+WANT = {"fast": ["nemotron", "nano"], "judge": ["nemotron", "ultra"], "vision": ["nemotron", "vl"]}
 
 TRUSTED = (".gov", ".gouv.fr", ".edu", ".int", ".europa.eu", "nih.gov", "who.int", "reuters.com",
            "apnews.com", "afp.com", "bbc.co.uk", "bbc.com", "nature.com", "science.org", "snopes.com",
            "fullfact.org", "politifact.com", "factcheck.org", "britannica.com", "wikipedia.org",
            "scientificamerican.com", "nytimes.com", "theguardian.com", "lemonde.fr", "insee.fr")
+NO_TEXT = ("youtube.com", "youtu.be", "tiktok.com", "instagram.com", "facebook.com", "x.com", "twitter.com")
 
 
 async def resolve_models():
@@ -39,17 +40,21 @@ async def resolve_models():
     ids = [m.id for m in (await llm.models.list()).data]
     for role, words in WANT.items():
         if not MODELS[role]:
-            hits = [i for i in ids if all(w in i.lower() for w in words)]
+            hits = [i for i in ids if all(w in i.lower() for w in words)
+                    and (role == "vision" or "vl" not in i.lower())]
             MODELS[role] = hits[0] if hits else ""
     if not MODELS["fast"]:
         raise RuntimeError(f"No Nemotron Nano model found on Token Factory. Available: {ids}")
-    MODELS["judge"] = MODELS["judge"] or MODELS["fast"]
+    MODELS["judge"] = MODELS["judge"] or next((i for i in ids if "nemotron" in i.lower() and "super" in i.lower()
+                                               and "vl" not in i.lower()), MODELS["fast"])
     return MODELS
 
 
 async def ask_json(model, system, user, max_tokens=1200):
+    # Reasoning off + JSON mode: measured 1.2s for Ultra vs 3-13s with thinking, and no malformed JSON
     r = await llm.chat.completions.create(
-        model=model, temperature=0.1, max_tokens=max_tokens,
+        model=model, temperature=0.1, max_tokens=max_tokens, response_format={"type": "json_object"},
+        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
         messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
     )
     text = re.sub(r"<think>.*?</think>", "", r.choices[0].message.content or "", flags=re.S)
@@ -101,12 +106,15 @@ Return JSON only:
 {"claims":[{"text":"<claim, self-contained, max 25 words>","kind":"number|quote|fact|opinion",
 "query_for":"<query that would confirm it>","query_against":"<query that would debunk or correct it>",
 "topic":"general|news|finance","recent":true|false}]}
-Rules: at most 3 claims, most important first. Opinions get kind "opinion". Keep the language of the text in claims,
+Rules: at most 3 claims, most important first. Kind "opinion" is ONLY for subjective taste or values
+("this movie is great"); a statement that is checkable, even obviously false, is a "fact".
+query_against must differ from query_for: it hunts for debunks and corrections (use words like myth, false,
+actually, debunked, correction). Keep the language of the text in claims,
 but write queries in English unless the topic is local. "recent" is true only for events of the last 12 months."""
 
 JUDGE_PROMPT = """You are a rigorous fact-checker. Judge the claim ONLY from the numbered sources given.
 Return JSON only:
-{"label":"true|mostly_true|misleading|false|unverifiable","confidence":0-100,
+{"label":"true|mostly_true|misleading|false|unverifiable","confidence":<integer 0-100>,
 "summary":"<2 short sentences, plain English, say what is actually true>",
 "quotes":[{"source":"S1","text":"<sentence copied EXACTLY, character for character, from that source>"}]}
 Rules: 1 to 3 quotes, each copied verbatim (no paraphrase, no added words). If sources disagree or are weak, say so
@@ -157,6 +165,13 @@ async def check(text, image_b64=None, emit=None):
                 "claims": [{"id": c["id"], "text": c["text"], "kind": c.get("kind", "fact")} for c in claims]})
 
     async def one(c):
+        try:
+            await judge_claim(c)
+        except Exception as e:  # one failing claim must not sink the others
+            await send({"type": "verdict", "claim": c["id"], "label": "unverifiable", "confidence": 0, "quotes": [],
+                        "rejected": 0, "summary": f"Couldn't check this one: {str(e)[:120]}"})
+
+    async def judge_claim(c):
         cid = c["id"]
         if c.get("kind") == "opinion":
             await send({"type": "verdict", "claim": cid, "label": "unverifiable", "confidence": 0,
@@ -176,6 +191,8 @@ async def check(text, image_b64=None, emit=None):
                 if r["url"] not in seen:
                     seen.add(r["url"])
                     sources.append({**r, "side": side})
+        # Video and social pages have no readable text for /extract
+        sources = [s for s in sources if not domain(s["url"]).endswith(NO_TEXT)]
         sources.sort(key=lambda r: (not trust(r["url"]), -r.get("score", 0)))
         # Read the top 3, but always include the best source from the challenging side
         top = sources[:3]
@@ -222,6 +239,12 @@ async def check(text, image_b64=None, emit=None):
     async def origin(c):
         if c.get("kind") not in ("number", "quote"):
             return
+        try:
+            await find_origin(c)
+        except Exception:
+            pass  # origin is a bonus, never an error
+
+    async def find_origin(c):
         res = await tav("search", c["id"], "origin", query=f"\"{c['text'][:120]}\"", topic="news",
                         max_results=10, search_depth="basic")
         dated = sorted((r for r in res.get("results", []) if r.get("published_date")),
