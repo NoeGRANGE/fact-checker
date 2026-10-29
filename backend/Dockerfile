@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 WORKDIR /app
 COPY pyproject.toml ./
-COPY margin ./margin
+COPY proofmark ./proofmark
 RUN pip install --no-cache-dir .
 EXPOSE 8787
-CMD ["uvicorn", "margin.server:app", "--host", "0.0.0.0", "--port", "8787"]
+CMD ["uvicorn", "proofmark.server:app", "--host", "0.0.0.0", "--port", "8787"]

@@ -78,7 +78,7 @@ final class Check: ObservableObject {
     private var rawEvents: [String] = []
     private var task: Task<Void, Never>?
 
-    static let server = URL(string: ProcessInfo.processInfo.environment["MARGIN_URL"] ?? "http://127.0.0.1:8787")!
+    static let server = URL(string: ProcessInfo.processInfo.environment["PROOFMARK_URL"] ?? "http://127.0.0.1:8787")!
 
     init(error: String, app: String) {
         (mode, self.app, date, input) = (.check, app, Date(), "")
@@ -109,7 +109,7 @@ final class Check: ObservableObject {
         do {
             let (bytes, response) = try await URLSession.shared.bytes(for: req)
             if let http = response as? HTTPURLResponse, http.statusCode != 200 {
-                error = "The Margin server answered \(http.statusCode)."
+                error = "The Proofmark server answered \(http.statusCode)."
                 return
             }
             for try await line in bytes.lines where line.hasPrefix("data: ") {
@@ -119,7 +119,7 @@ final class Check: ObservableObject {
             }
         } catch is CancellationError {
         } catch {
-            self.error = "Can't reach the Margin server at \(Check.server.absoluteString). Start it with ./run.sh."
+            self.error = "Can't reach the Proofmark server at \(Check.server.absoluteString). Start it with ./run.sh."
         }
     }
 
@@ -173,13 +173,13 @@ final class Check: ObservableObject {
     /// Markdown summary for ⌘C, ready to paste in a reply.
     var markdown: String {
         if mode == .research {
-            return "**\(input)**\n\n\(tldr.map { "_\($0)_\n\n" } ?? "")\(report)\n\n_Researched with Margin_"
+            return "**\(input)**\n\n\(tldr.map { "_\($0)_\n\n" } ?? "")\(report)\n\n_Researched with Proofmark_"
         }
         return claims.map { c in
             guard let v = c.verdict else { return "" }
             let src = v.quotes.map { "> \($0.text)\n> — \($0.url)" }.joined(separator: "\n")
             return "**\(Style.word(v.label))** (\(v.confidence)%): \(c.text)\n\(v.summary)\n\(src)"
-        }.joined(separator: "\n\n") + "\n\n_Checked with Margin_"
+        }.joined(separator: "\n\n") + "\n\n_Checked with Proofmark_"
     }
 }
 

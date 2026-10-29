@@ -1,8 +1,8 @@
-<p align="center"><img src="assets/logo-256.png" width="128" alt="Margin logo"></p>
+<p align="center"><img src="assets/logo-256.png" width="128" alt="Proofmark logo"></p>
 
-# Margin
+# Proofmark
 
-**Highlight anything on your Mac. Margin tells you if it's true, and digs deeper when you want more.**
+**Highlight anything on your Mac. Proofmark tells you if it's true, and digs deeper when you want more.**
 
 Select a sentence in any app (Slack, Mail, Safari, a PDF, Notes) and press **⌥Space**. A glass panel opens next to your cursor. In a few seconds the claim gets marked with a highlighter colour for its verdict, followed by the exact quotes that prove it, every source it read, and the earliest coverage it found. One click turns any claim into a full research brief.
 
@@ -31,14 +31,14 @@ git clone https://github.com/NoeGRANGE/fact-checker.git && cd fact-checker
 ./run.sh      # first run creates .env: add your two keys, then run it again
 ```
 
-`run.sh` builds `Margin.app`, opens it in your menu bar, and starts the backend on `http://127.0.0.1:8787`. It uses [uv](https://docs.astral.sh/uv/) if you have it, and plain `python3 -m venv` + `pip` otherwise.
+`run.sh` builds `Proofmark.app`, opens it in your menu bar, and starts the backend on `http://127.0.0.1:8787`. It uses [uv](https://docs.astral.sh/uv/) if you have it, and plain `python3 -m venv` + `pip` otherwise.
 
 ### Option B: no Xcode (prebuilt app + Docker)
 
-1. Download `Margin.zip` from the [latest release](https://github.com/NoeGRANGE/fact-checker/releases/latest), unzip it, then:
+1. Download `Proofmark.zip` from the [latest release](https://github.com/NoeGRANGE/fact-checker/releases/latest), unzip it, then:
    ```bash
-   xattr -dr com.apple.quarantine Margin.app   # the app is not notarized by Apple
-   open Margin.app
+   xattr -dr com.apple.quarantine Proofmark.app   # the app is not notarized by Apple
+   open Proofmark.app
    ```
 2. Start the backend:
    ```bash
@@ -73,7 +73,7 @@ Open **http://127.0.0.1:8787**. The playground runs the same pipeline as the Mac
 ### Fact-check (⌥Space)
 
 ```
- Margin.app (Swift)            backend (FastAPI)                          Nebius Token Factory / Tavily
+ Proofmark.app (Swift)            backend (FastAPI)                          Nebius Token Factory / Tavily
  ⌥Space → selected text   ──►  1. split into claims + write queries   ──►  Nemotron 3 Nano 30B
  ⌥⇧Space → screenshot          0. image → text                        ──►  Nemotron 3.5 Super VL
         ▲                      2. search to CONFIRM and to CHALLENGE  ──►  Tavily /search  (×2, parallel)
@@ -132,27 +132,27 @@ Model IDs are auto-detected from the Token Factory model list, or can be pinned 
 
 ## Privacy
 
-- **History stays on your Mac** in `~/Library/Application Support/Margin/history.json`. Delete an entry with a right-click in the History window.
+- **History stays on your Mac** in `~/Library/Application Support/Proofmark/history.json`. Delete an entry with a right-click in the History window.
 - **What leaves your Mac:** the selected text (or screenshot) goes to your local backend, which sends it to Token Factory and Tavily with your own keys.
-- **The clipboard is restored** when Margin has to use ⌘C to read a selection.
+- **The clipboard is restored** when Proofmark has to use ⌘C to read a selection.
 
 ## Project layout
 
 ```
-backend/margin/pipeline.py   fact-check agent + research agent (Tavily + Nemotron + quote verification)
-backend/margin/server.py     FastAPI: /check and /research stream events over SSE, serves the playground
-backend/margin/static/       web playground
+backend/proofmark/pipeline.py   fact-check agent + research agent (Tavily + Nemotron + quote verification)
+backend/proofmark/server.py     FastAPI: /check and /research stream events over SSE, serves the playground
+backend/proofmark/static/       web playground
 backend/Dockerfile           backend image (docker compose up)
-macos/Sources/Margin/        menu bar app: hotkeys, selection capture, panel, history
+macos/Sources/Proofmark/        menu bar app: hotkeys, selection capture, panel, history
 run.sh                       build + launch everything
-package.sh                   build the universal Margin.zip for releases
+package.sh                   build the universal Proofmark.zip for releases
 ```
 
 Run the pipeline from a terminal:
 
 ```bash
 cd backend
-uv run --env-file ../.env python -m margin.pipeline "The Great Wall of China is visible from space."
+uv run --env-file ../.env python -m proofmark.pipeline "The Great Wall of China is visible from space."
 uv run python test_pipeline.py   # quote-verification self-checks
 ```
 

@@ -45,7 +45,7 @@ enum Selection {
 
     /// Native crosshair region picker from macOS itself; returns PNG data.
     static func captureRegion() async -> Data? {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("margin-\(UUID().uuidString).png")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("proofmark-\(UUID().uuidString).png")
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         p.arguments = ["-i", "-x", url.path]

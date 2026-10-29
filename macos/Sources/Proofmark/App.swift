@@ -17,14 +17,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ note: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "highlighter", accessibilityDescription: "Margin")
+        statusItem.button?.image = NSImage(systemSymbolName: "highlighter", accessibilityDescription: "Proofmark")
         let menu = NSMenu()
         menu.addItem(withTitle: "Check selection   ⌥Space", action: #selector(checkSelection), keyEquivalent: "")
         menu.addItem(withTitle: "Check screen region   ⌥⇧Space", action: #selector(checkRegion), keyEquivalent: "")
         menu.addItem(withTitle: "Research selection   ⌃⌥Space", action: #selector(researchSelection), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: "History…", action: #selector(showHistory), keyEquivalent: "")
-        menu.addItem(withTitle: "Quit Margin", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: "Quit Proofmark", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.items.forEach { $0.target = $0.action == #selector(NSApplication.terminate(_:)) ? nil : self }
         statusItem.menu = menu
 
@@ -56,8 +56,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let app = NSWorkspace.shared.frontmostApplication?.localizedName ?? ""
         // Each rebuild changes the app's signature, which silently invalidates the old Accessibility grant
         guard AXIsProcessTrusted() else {
-            panel.show(Check(error: "Margin needs Accessibility access to read your selection. In the window that just opened, "
-                             + "remove Margin with −, add it back with +, then reopen Margin.", app: app))
+            panel.show(Check(error: "Proofmark needs Accessibility access to read your selection. In the window that just opened, "
+                             + "remove Proofmark with −, add it back with +, then reopen Proofmark.", app: app))
             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
             return
         }

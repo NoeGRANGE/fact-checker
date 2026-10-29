@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Margin",
+    name: "Proofmark",
     platforms: [.macOS(.v14)],
-    targets: [.executableTarget(name: "Margin", path: "Sources/Margin")]
+    targets: [.executableTarget(name: "Proofmark", path: "Sources/Proofmark")]
 )

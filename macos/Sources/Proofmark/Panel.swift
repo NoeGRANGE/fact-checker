@@ -131,7 +131,7 @@ struct PanelView: View {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 2).fill(Style.ink(check.mode == .research ? "research" : nil))
                 .frame(width: 14, height: 8).rotationEffect(.degrees(-8))
-            Text(check.mode == .research ? "MARGIN · RESEARCH" : "MARGIN").font(Style.mono).tracking(2.4)
+            Text(check.mode == .research ? "PROOFMARK · RESEARCH" : "PROOFMARK").font(Style.mono).tracking(2.4)
             if !check.app.isEmpty {
                 Text("· \(check.app)").font(Style.mono).foregroundStyle(.secondary).lineLimit(1)
             }

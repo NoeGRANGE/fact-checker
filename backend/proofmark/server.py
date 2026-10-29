@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from .pipeline import check, research, resolve_models
 
-app = FastAPI(title="Margin")
+app = FastAPI(title="Proofmark")
 STATIC = Path(__file__).parent / "static"
 # shortcut: in-memory cache, lost on restart; move to redis/sqlite if this gets hosted
 cache: dict[str, list] = {}

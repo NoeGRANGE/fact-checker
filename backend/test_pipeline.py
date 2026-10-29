@@ -1,4 +1,4 @@
-from margin.pipeline import best_passages, norm, quote_found
+from proofmark.pipeline import best_passages, norm, quote_found
 
 src = norm("Brain imaging shows that virtually all regions of the brain are active over a day. The 10% myth is false.")
 assert quote_found("virtually all regions of the brain are active over a day", src)

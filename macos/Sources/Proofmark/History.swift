@@ -18,7 +18,7 @@ final class HistoryStore: ObservableObject {
     @Published private(set) var entries: [HistoryEntry] = []
     private let file: URL = {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Margin", isDirectory: true)
+            .appendingPathComponent("Proofmark", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("history.json")
     }()
@@ -53,7 +53,7 @@ enum HistoryWindow {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 920, height: 620),
                              styleMask: [.titled, .closable, .resizable, .miniaturizable, .fullSizeContentView],
                              backing: .buffered, defer: false)
-            w.title = "Margin History"
+            w.title = "Proofmark History"
             w.titlebarAppearsTransparent = true
             w.isReleasedWhenClosed = false
             w.appearance = NSAppearance(named: .darkAqua)
