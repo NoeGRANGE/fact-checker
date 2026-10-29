@@ -1,0 +1,8 @@
+.env
+.venv/
+__pycache__/
+.build/
+build/
+*.app
+.DS_Store
+margin-prd.html

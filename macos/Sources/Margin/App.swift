@@ -1,0 +1,78 @@
+import AppKit
+import Carbon.HIToolbox
+
+@main
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    static func main() {
+        let app = NSApplication.shared
+        let delegate = AppDelegate()
+        app.delegate = delegate
+        app.setActivationPolicy(.accessory)
+        app.run()
+    }
+
+    var statusItem: NSStatusItem!
+    let panel = CheckPanel()
+
+    func applicationDidFinishLaunching(_ note: Notification) {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem.button?.image = NSImage(systemSymbolName: "highlighter", accessibilityDescription: "Margin")
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Check selection   ⌥Space", action: #selector(checkSelection), keyEquivalent: "")
+        menu.addItem(withTitle: "Check screen region   ⌥⇧Space", action: #selector(checkRegion), keyEquivalent: "")
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Quit Margin", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.items.forEach { $0.target = $0.action == #selector(NSApplication.terminate(_:)) ? nil : self }
+        statusItem.menu = menu
+
+        // Prompts for Accessibility once; needed to read the selection in other apps
+        let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+        AXIsProcessTrustedWithOptions(opts)
+
+        Hotkeys.register(keyCode: UInt32(kVK_Space), modifiers: UInt32(optionKey)) { [weak self] in self?.checkSelection() }
+        Hotkeys.register(keyCode: UInt32(kVK_Space), modifiers: UInt32(optionKey | shiftKey)) { [weak self] in self?.checkRegion() }
+    }
+
+    @objc func checkSelection() {
+        let app = NSWorkspace.shared.frontmostApplication?.localizedName ?? ""
+        Task { @MainActor in
+            guard let text = await Selection.read(), !text.isEmpty else {
+                panel.show(Check(error: "Select some text first, then press ⌥Space.", app: app))
+                return
+            }
+            panel.show(Check(text: String(text.prefix(2000)), image: nil, app: app))
+        }
+    }
+
+    @objc func checkRegion() {
+        Task { @MainActor in
+            guard let png = await Selection.captureRegion() else { return }
+            panel.show(Check(text: "", image: png, app: "Screen"))
+        }
+    }
+}
+
+/// Global hotkeys through Carbon: no dependency, works without the app being focused.
+enum Hotkeys {
+    static var handlers: [UInt32: () -> Void] = [:]
+    static var installed = false
+
+    static func register(keyCode: UInt32, modifiers: UInt32, action: @escaping () -> Void) {
+        if !installed {
+            installed = true
+            var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+            InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
+                var id = EventHotKeyID()
+                GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                                  nil, MemoryLayout<EventHotKeyID>.size, nil, &id)
+                DispatchQueue.main.async { Hotkeys.handlers[id.id]?() }
+                return noErr
+            }, 1, &spec, nil, nil)
+        }
+        let id = UInt32(handlers.count + 1)
+        handlers[id] = action
+        var ref: EventHotKeyRef?
+        RegisterEventHotKey(keyCode, modifiers, EventHotKeyID(signature: OSType(0x4D52474E), id: id),
+                            GetApplicationEventTarget(), 0, &ref)
+    }
+}
