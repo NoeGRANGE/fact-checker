@@ -54,6 +54,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func fromSelection(_ mode: Mode) {
         let app = NSWorkspace.shared.frontmostApplication?.localizedName ?? ""
+        // Each rebuild changes the app's signature, which silently invalidates the old Accessibility grant
+        guard AXIsProcessTrusted() else {
+            panel.show(Check(error: "Margin needs Accessibility access to read your selection. In the window that just opened, "
+                             + "remove Margin with −, add it back with +, then reopen Margin.", app: app))
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+            return
+        }
         Task { @MainActor in
             guard let text = await Selection.read(), !text.isEmpty else {
                 panel.show(Check(error: "Select some text first, then press ⌥Space.", app: app))
