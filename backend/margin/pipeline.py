@@ -201,7 +201,8 @@ async def check(text, image_b64=None, emit=None):
             top = top[:2] + [best_con]
         await send({"type": "sources", "claim": cid, "sources": [
             {"url": s["url"], "domain": domain(s["url"]), "title": s.get("title", ""), "side": s["side"],
-             "trusted": trust(s["url"]), "date": s.get("published_date")} for s in sources[:8]]})
+             "trusted": trust(s["url"]), "date": s.get("published_date"),
+             "snippet": re.sub(r"\s+", " ", s.get("content", ""))[:400]} for s in sources[:8]]})
 
         raw = {}
         if top:
@@ -256,6 +257,69 @@ async def check(text, image_b64=None, emit=None):
 
     await asyncio.gather(*(one(c) for c in claims), *(origin(c) for c in claims))
     await send({"type": "done", "tavily_calls": stats["tavily_calls"], "ms": round((time.perf_counter() - t0) * 1000)})
+    return events
+
+
+RESEARCH_BRIEF = """Write a concise, well-sourced briefing for someone who just highlighted this while reading:
+"{text}"
+Under 350 words. Use 3 or 4 sections, each starting with a '## ' heading. Lead with what matters most,
+include concrete numbers and dates, and cite sources inline."""
+
+TLDR_PROMPT = """Summarize the research report for a busy reader. Return JSON only:
+{"tldr":"<one or two plain sentences, the answer itself>",
+"follow_ups":["<short follow-up question>","<short follow-up question>"]}"""
+
+
+async def research(text, emit=None):
+    """Deep dive on a highlighted topic: Tavily /research streams plan, searches and a cited report,
+    then Nemotron writes the TL;DR and follow-up questions."""
+    events, t0 = [], time.perf_counter()
+
+    async def send(ev):
+        ev["t"] = round((time.perf_counter() - t0) * 1000)
+        events.append(ev)
+        if emit:
+            await emit(ev)
+
+    models = await resolve_models()
+    await send({"type": "status", "text": "Planning the research"})
+    report, sources, seen = "", [], {}
+    body = {"input": RESEARCH_BRIEF.format(text=text[:1500]), "model": "mini", "stream": True}
+    async with http.stream("POST", f"{TAVILY}/research", json=body, timeout=180,
+                           headers={"Authorization": f"Bearer {os.environ.get('TAVILY_API_KEY', '')}"}) as r:
+        r.raise_for_status()
+        async for line in r.aiter_lines():
+            if not line.startswith("data: "):
+                continue
+            delta = json.loads(line[6:])["choices"][0]["delta"]
+            calls = delta.get("tool_calls") or {}
+            for resp in calls.get("tool_response", []):
+                for src in resp.get("sources", []):
+                    seen.setdefault(src["url"], src)
+            for call in calls.get("tool_call", []):
+                await send({"type": "trace", "endpoint": "research", "label": call.get("name", "").lower(),
+                            "query": "; ".join(call.get("queries", [])) or call.get("arguments", ""),
+                            "ms": 0, "count": len(call.get("queries", []))})
+                await send({"type": "status", "text": call.get("arguments", "")})
+            if isinstance(delta.get("content"), str):
+                report += delta["content"]
+                await send({"type": "report", "delta": delta["content"]})
+            if delta.get("sources"):
+                sources = [{"url": s["url"], "title": s.get("title", ""), "domain": domain(s["url"])}
+                           for s in delta["sources"]]
+                await send({"type": "research_sources", "sources": sources})
+
+    if not sources and seen:  # some streams skip the final source list: fall back to what the searches found
+        sources = [{"url": u, "title": x.get("title", ""), "domain": domain(u)} for u, x in list(seen.items())[:20]]
+        await send({"type": "research_sources", "sources": sources})
+    if report:
+        try:
+            s = await ask_json(models["fast"], TLDR_PROMPT, report[:8000], max_tokens=400)
+            await send({"type": "tldr", "text": s.get("tldr", ""), "follow_ups": s.get("follow_ups", [])[:3],
+                        "model": models["fast"]})
+        except Exception:
+            pass  # the report stands on its own
+    await send({"type": "done", "tavily_calls": 1, "ms": round((time.perf_counter() - t0) * 1000)})
     return events
 
 

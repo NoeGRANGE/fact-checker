@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Margin</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Instrument+Sans:wght@400;500&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
 /* Same world as the Mac panel: dark paper, highlighter inks, mono margin notes */
 :root{
   --paper:#111216; --sheet:#191a20; --fg:#ecebe6; --muted:#8d8e98; --line:#2a2b33;
-  --pending:#ffe14d; --true:#7cf29a; --mostly_true:#c7f26b; --misleading:#ffd13f; --false:#ff70a3; --unverifiable:#c2c2d6;
+  --pending:#ffe14d; --true:#7cf29a; --mostly_true:#c7f26b; --misleading:#ffd13f; --false:#ff70a3; --unverifiable:#c2c2d6; --research:#80d4ff;
   --serif:"Newsreader",Georgia,serif; --sans:"Instrument Sans",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--fg);font:15px/1.55 var(--sans);
   padding:48px max(16px,env(safe-area-inset-right)) 80px max(16px,env(safe-area-inset-left))}
-main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+main{max-width:660px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
 .mono{font:500 11px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .brand{display:flex;align-items:center;gap:10px}
 .brand i{width:16px;height:9px;border-radius:2px;background:var(--pending);transform:rotate(-8deg)}
@@ -27,29 +27,50 @@ h1{font:400 clamp(30px,6vw,44px)/1.1 var(--serif);margin:0;text-wrap:balance}
 h1 .mk{background-size:100% 78%;color:#111;padding:0 .1em}
 textarea{width:100%;min-height:110px;background:var(--sheet);color:var(--fg);border:1px solid var(--line);border-radius:14px;
   padding:14px 16px;font:17px/1.5 var(--serif);resize:vertical}
-textarea:focus-visible,button:focus-visible{outline:2px solid var(--pending);outline-offset:2px}
+textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--pending);outline-offset:2px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 button{font:700 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;border-radius:10px;border:1px solid var(--line);
   background:var(--sheet);color:var(--fg);padding:10px 14px;cursor:pointer}
 button.go{background:var(--pending);color:#111;border-color:var(--pending)}
+button.dig{background:var(--research);color:#111;border-color:var(--research);padding:6px 10px;border-radius:7px;font-size:10.5px}
 button:disabled{opacity:.5;cursor:wait}
 #out{display:flex;flex-direction:column;gap:22px}
 .claim{display:flex;flex-direction:column;gap:10px;padding-top:18px;border-top:1px solid var(--line)}
 .ctext{font:19px/1.5 var(--serif)}
 .ctext.wait .mk{background-size:100% 78%;--ink:rgba(255,225,77,.14);color:var(--fg);animation:pulse 1.2s ease-in-out infinite alternate}
 @keyframes pulse{to{opacity:.6}}
-.verdict{display:flex;align-items:center;gap:12px;font:700 12px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+details > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px}
+details > summary::-webkit-details-marker{display:none}
+details > summary::after{content:"›";margin-left:auto;color:var(--muted);font:700 14px var(--mono);transition:transform .2s}
+details[open] > summary::after{transform:rotate(90deg)}
+details > .fold{display:flex;flex-direction:column;gap:10px;padding-top:10px}
+.verdict{font:700 12px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
 .ruler{display:flex;gap:3px;align-items:flex-end}
 .ruler b{width:3px;height:8px;border-radius:2px;background:var(--line)}
 .ruler b:nth-child(5n){height:12px}
 .ruler b.f{background:var(--ink)}
-.quote{display:grid;grid-template-columns:3px 1fr;gap:12px;text-decoration:none;color:inherit}
+.quote{display:grid;grid-template-columns:3px 1fr;gap:12px}
 .quote::before{content:"";background:var(--ink);border-radius:3px}
 .quote q{font:italic 15px/1.5 var(--serif)}
+.quote a,.src a{color:var(--muted)}
+.src summary{font-size:13px;min-width:0}
+.src summary span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.side{font:700 9px var(--mono);letter-spacing:.1em;width:52px;flex:none}
+.side.for{color:var(--true)} .side.against{color:var(--false)}
+.src p{font:14px/1.5 var(--serif);margin:0;color:#cfcfca;padding-left:62px}
+.src .fold a{padding-left:62px}
+.section summary{font-weight:600;font-size:15px}
+.section .fold{color:#d6d5d0}
+.section .fold p{margin:0}
+.section a{color:var(--research);text-decoration:none;font:600 11px var(--mono)}
+.tldr{font:18px/1.5 var(--serif);margin:0}
+.follow{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.follow button{background:none;border:0;padding:0;color:var(--research);font:15px var(--serif);text-transform:none;letter-spacing:0;text-align:left}
 .trace{display:flex;flex-direction:column;gap:4px;font:500 11px var(--mono);color:var(--muted)}
 .trace div{display:grid;grid-template-columns:auto 76px 1fr auto;gap:8px;align-items:center}
 .trace div > *{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .trace em{font-style:normal;background:var(--pending);color:#111;padding:1px 5px;border-radius:3px;font-weight:700;font-size:9.5px}
+.trace em.r{background:var(--research)}
 .err{color:var(--false)}
 @media (prefers-reduced-motion:reduce){.mk{transition:none}.ctext.wait .mk{animation:none}}
 </style>
@@ -58,10 +79,11 @@ button:disabled{opacity:.5;cursor:wait}
 <main>
   <div class="brand"><i></i><span class="mono">Margin · web playground</span></div>
   <h1>Paste a claim. Get it <span class="mk">checked</span> with sources.</h1>
-  <p style="color:var(--muted);margin:0">The Mac app does this from any app with ⌥Space. Same backend: Tavily searches both sides, NVIDIA Nemotron on Nebius Token Factory judges, and every quote is verified word for word against the source.</p>
+  <p style="color:var(--muted);margin:0">The Mac app does this from any app with ⌥Space. Same backend: Tavily searches both sides, NVIDIA Nemotron on Nebius Token Factory judges, and every quote is verified word for word against the source. Research mode runs a full Tavily research on a topic.</p>
   <textarea id="text" aria-label="Text to check">Humans only use 10% of their brain, according to neuroscientists.</textarea>
   <div class="row">
     <button class="go" id="go">Check it</button>
+    <button id="dig">Research it</button>
     <button data-ex="The Great Wall of China is the only man-made structure visible from space with the naked eye.">Example: Great Wall</button>
     <button data-ex="Mount Everest is the tallest mountain on Earth at 8,849 meters, and it grows about 4 millimeters each year.">Example: Everest</button>
   </div>
@@ -69,18 +91,29 @@ button:disabled{opacity:.5;cursor:wait}
   <div class="trace" id="trace" aria-live="polite"></div>
 </main>
 <script>
-const $ = s => document.querySelector(s), out = $("#out"), trace = $("#trace"), go = $("#go");
+const $ = s => document.querySelector(s), out = $("#out"), trace = $("#trace");
 const WORD = {true:"True",mostly_true:"Mostly true",misleading:"Misleading",false:"False",unverifiable:"Unverifiable"};
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-document.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => { $("#text").value = b.dataset.ex; run(); });
-go.onclick = run;
+const safeUrl = u => /^https?:\/\//.test(u) ? esc(u) : "#";
+let state = {};
+document.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => { $("#text").value = b.dataset.ex; run("check"); });
+$("#go").onclick = () => run("check");
+$("#dig").onclick = () => run("research");
+out.addEventListener("click", e => {
+  const q = e.target.closest("[data-research]");
+  if (q) { $("#text").value = q.dataset.research; run("research"); window.scrollTo({top: 0, behavior: "smooth"}); }
+});
 
-async function run() {
-  const text = $("#text").value.trim();
+async function run(mode, text = $("#text").value.trim()) {
   if (!text) return;
-  go.disabled = true; out.innerHTML = `<div class="mono" id="status">Reading</div>`; trace.innerHTML = "";
+  document.querySelectorAll("button").forEach(b => b.disabled = true);
+  state = {mode, text, report: "", sources: [], claimSources: {}, origins: {}};
+  out.innerHTML = mode === "research"
+    ? `<section class="claim" style="--ink:var(--research);border:0;padding:0"><div class="ctext wait"><span class="mk">${esc(text)}</span></div><div class="mono" id="status">Planning the research</div><div id="report"></div></section>`
+    : `<div class="mono" id="status">Reading</div>`;
+  trace.innerHTML = "";
   try {
-    const res = await fetch("/check", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text})});
+    const res = await fetch("/" + mode, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text})});
     if (!res.ok) throw new Error((await res.json()).detail || `Server answered ${res.status}`);
     const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
     let buf = "";
@@ -92,35 +125,81 @@ async function run() {
       parts.filter(p => p.startsWith("data: ")).forEach(p => apply(JSON.parse(p.slice(6))));
     }
   } catch (e) { out.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
-  go.disabled = false;
+  document.querySelectorAll("button").forEach(b => b.disabled = false);
 }
+
+// Minimal markdown for the research report: **bold**, bullets, [n] citations linked to sources
+function md(text) {
+  return text.trim().split(/\n{2,}/).map(p => {
+    let h = esc(p).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^[-*] /gm, "• ").replace(/\n/g, "<br>");
+    h = h.replace(/[\[【](\d+)[\]】]/g, (m, n) => state.sources[n - 1] ? `<a href="${safeUrl(state.sources[n - 1].url)}" target="_blank" rel="noopener">[${n}]</a>` : m);
+    return `<p>${h}</p>`;
+  }).join("");
+}
+
+function renderReport() {
+  const secs = [];
+  state.report.split("\n").forEach(line => {
+    if (line.startsWith("#")) secs.push({title: line.replace(/^#+\s*/, ""), body: ""});
+    else if (secs.length) secs[secs.length - 1].body += line + "\n";
+    else if (line.trim()) secs.push({title: "Overview", body: line + "\n"});
+  });
+  const open = new Set([...document.querySelectorAll("#report details[open]")].map(d => d.dataset.i));
+  $("#report").innerHTML = secs.map((s, i) =>
+    `<details class="section" data-i="${i}" ${i === 0 || open.has(String(i)) ? "open" : ""}><summary>${esc(s.title)}</summary><div class="fold">${md(s.body)}</div></details>`).join("");
+}
+
+function sourceList(sources) {
+  return sources.map(s => `<details class="src"><summary>${s.side ? `<b class="side ${s.side === "challenge" ? "against" : "for"}">${s.side === "challenge" ? "AGAINST" : "FOR"}</b>` : ""}
+    <b class="mono" style="color:var(--fg);flex:none">${esc(s.domain)}</b><span>${esc(s.title)}</span></summary>
+    <div class="fold">${s.snippet ? `<p>${esc(s.snippet)}</p>` : ""}<a class="mono" href="${safeUrl(s.url)}" target="_blank" rel="noopener">Open ${esc(s.domain)} ↗</a></div></details>`).join("");
+}
+
+const originLink = o => o ? `<a class="mono" href="${safeUrl(o.url)}" target="_blank" rel="noopener" style="color:var(--muted)">Earliest found · ${esc(o.domain)} · ${esc(o.date.slice(0, 16))}</a>` : "";
 
 function apply(ev) {
   const st = $("#status");
   if (ev.type === "status" && ev.claim == null && st) st.textContent = ev.text;
   if (ev.type === "status" && ev.claim != null) { const s = $(`#c${ev.claim} .mono`); if (s) s.textContent = ev.text; }
   if (ev.type === "error") out.innerHTML = `<p class="err">${esc(ev.message)}</p>`;
+  if (ev.type === "trace") trace.insertAdjacentHTML("beforeend",
+    `<div><em class="${ev.endpoint === "research" ? "r" : ""}">${esc(ev.endpoint)}</em><span>${esc(ev.label)}</span><span>${esc(ev.query)}</span><span>${ev.ms ? `${ev.count} · ${ev.ms}ms` : ev.count ? `${ev.count} queries` : ""}</span></div>`);
+  if (ev.type === "done") trace.insertAdjacentHTML("afterbegin", `<div class="mono" style="display:block;margin-bottom:6px">${state.mode === "research" ? "Tavily research" : ev.tavily_calls + " Tavily calls"} · ${(ev.ms / 1000).toFixed(1)}s${ev.cached ? " · cached" : ""}</div>`);
+
+  // Research mode
+  if (ev.type === "report") { state.report += ev.delta; renderReport(); }
+  if (ev.type === "research_sources") { state.sources = ev.sources; renderReport();
+    $("#report").insertAdjacentHTML("afterend", `<details id="rsrc"><summary class="mono">Sources · ${ev.sources.length}</summary><div class="fold">${sourceList(ev.sources)}</div></details>`); }
+  if (ev.type === "tldr") {
+    $(".ctext")?.classList.remove("wait"); st?.remove();
+    requestAnimationFrame(() => requestAnimationFrame(() => $(".ctext .mk")?.classList.add("on")));
+    $(".ctext").insertAdjacentHTML("afterend", `<p class="tldr">${esc(ev.text)}</p>`);
+    if (ev.follow_ups?.length) out.insertAdjacentHTML("beforeend", `<div class="follow"><span class="mono">Keep digging</span>${ev.follow_ups.map(q => `<button data-research="${esc(q)}">→ ${esc(q)}</button>`).join("")}</div>`);
+  }
+
+  // Check mode
   if (ev.type === "claims") out.innerHTML = ev.claims.map(c =>
     `<section class="claim" id="c${c.id}"><div class="ctext wait"><span class="mk">${esc(c.text)}</span></div>
-     <div class="mono">Searching both sides</div></section>`).join("") || `<p class="mono">No checkable claim found</p>`;
-  if (ev.type === "sources") { const s = $(`#c${ev.claim} .mono`); if (s) s.textContent = `Reading sources · ${ev.sources.length} found`; }
-  if (ev.type === "trace") trace.insertAdjacentHTML("beforeend",
-    `<div><em>${esc(ev.endpoint)}</em><span>${esc(ev.label)}</span><span>${esc(ev.query)}</span><span>${ev.count} · ${ev.ms}ms</span></div>`);
+     <div class="mono">Searching both sides</div></section>`).join("") ||
+    `<p class="mono">No checkable claim found</p><div><button class="dig" data-research="${esc(state.text)}">Research this instead →</button></div>`;
+  if (ev.type === "sources") { state.claimSources[ev.claim] = ev.sources; const s = $(`#c${ev.claim} .mono`); if (s) s.textContent = `Reading sources · ${ev.sources.length} found`; }
   if (ev.type === "verdict") {
-    const el = $(`#c${ev.claim}`), ink = `var(--${ev.label in WORD ? ev.label : "unverifiable"})`;
+    const el = $(`#c${ev.claim}`), ink = `var(--${ev.label in WORD ? ev.label : "unverifiable"})`, srcs = state.claimSources[ev.claim] || [];
     el.style.setProperty("--ink", ink);
     const filled = Math.round(ev.confidence / 10);
     el.innerHTML = `<div class="ctext"><span class="mk">${esc(el.querySelector(".mk").textContent)}</span></div>
-      <div class="verdict">${WORD[ev.label] || esc(ev.label)}<span class="ruler">${Array.from({length:10},(_, i) => `<b class="${i < filled ? "f" : ""}"></b>`).join("")}</span><span class="mono">${ev.confidence}</span></div>
-      <p style="margin:0">${esc(ev.summary)}</p>
-      ${ev.quotes.slice(0, 2).map(q => `<a class="quote" href="${esc(q.url)}" target="_blank" rel="noopener"><div><q>${esc(q.text)}</q>
-        <div class="mono">${esc(q.domain)}${q.date ? " · " + esc(q.date.slice(0, 16)) : ""}</div></div></a>`).join("")}
-      ${ev.rejected ? `<div class="mono">${ev.rejected} unverified quote${ev.rejected > 1 ? "s" : ""} dropped</div>` : ""}`;
+      <details ${ev.claim === 0 ? "open" : ""}><summary class="verdict">${WORD[ev.label] || esc(ev.label)}<span class="ruler">${Array.from({length:10},(_, i) => `<b class="${i < filled ? "f" : ""}"></b>`).join("")}</span><span class="mono">${ev.confidence}</span></summary>
+      <div class="fold"><p style="margin:0">${esc(ev.summary)}</p>
+      ${ev.quotes.slice(0, 3).map(q => `<div class="quote"><div><q>${esc(q.text)}</q>
+        <div class="mono">${esc(q.domain)}${q.date ? " · " + esc(q.date.slice(0, 16)) : ""} <a href="${safeUrl(q.url)}" target="_blank" rel="noopener">↗</a></div></div></div>`).join("")}
+      ${srcs.length ? `<details><summary class="mono">All sources · ${srcs.length}</summary><div class="fold">${sourceList(srcs)}</div></details>` : ""}
+      ${ev.rejected ? `<div class="mono">${ev.rejected} unverified quote${ev.rejected > 1 ? "s" : ""} dropped</div>` : ""}
+      <div class="origin">${originLink(state.origins[ev.claim])}</div>
+      <div><button class="dig" data-research="${esc(el.querySelector(".mk").textContent)}">Dig deeper →</button></div></div></details>`;
     requestAnimationFrame(() => requestAnimationFrame(() => el.querySelector(".mk").classList.add("on")));
   }
-  if (ev.type === "origin") $(`#c${ev.claim}`)?.insertAdjacentHTML("beforeend",
-    `<a class="mono" href="${esc(ev.url)}" target="_blank" rel="noopener" style="color:var(--muted)">Earliest found · ${esc(ev.domain)} · ${esc(ev.date.slice(0, 16))}</a>`);
-  if (ev.type === "done") trace.insertAdjacentHTML("afterbegin", `<div class="mono" style="display:block;margin-bottom:6px">${ev.tavily_calls} Tavily calls · ${(ev.ms / 1000).toFixed(1)}s${ev.cached ? " · cached" : ""}</div>`);
+  // Origin can land before or after the verdict
+  if (ev.type === "origin") { state.origins[ev.claim] = ev; const o = $(`#c${ev.claim} .origin`); if (o) o.innerHTML = originLink(ev); }
 }
 </script>
 </body>

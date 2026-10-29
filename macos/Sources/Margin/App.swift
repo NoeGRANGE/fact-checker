@@ -2,6 +2,7 @@ import AppKit
 import Carbon.HIToolbox
 
 @main
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static func main() {
         let app = NSApplication.shared
@@ -20,7 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(withTitle: "Check selection   ⌥Space", action: #selector(checkSelection), keyEquivalent: "")
         menu.addItem(withTitle: "Check screen region   ⌥⇧Space", action: #selector(checkRegion), keyEquivalent: "")
+        menu.addItem(withTitle: "Research selection   ⌃⌥Space", action: #selector(researchSelection), keyEquivalent: "")
         menu.addItem(.separator())
+        menu.addItem(withTitle: "History…", action: #selector(showHistory), keyEquivalent: "")
         menu.addItem(withTitle: "Quit Margin", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.items.forEach { $0.target = $0.action == #selector(NSApplication.terminate(_:)) ? nil : self }
         statusItem.menu = menu
@@ -31,23 +34,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Hotkeys.register(keyCode: UInt32(kVK_Space), modifiers: UInt32(optionKey)) { [weak self] in self?.checkSelection() }
         Hotkeys.register(keyCode: UInt32(kVK_Space), modifiers: UInt32(optionKey | shiftKey)) { [weak self] in self?.checkRegion() }
+        Hotkeys.register(keyCode: UInt32(kVK_Space), modifiers: UInt32(optionKey | controlKey)) { [weak self] in self?.researchSelection() }
     }
 
-    @objc func checkSelection() {
+    /// Opening the app again (Finder, Spotlight) shows the history.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        showHistory()
+        return false
+    }
+
+    @objc func checkSelection() { fromSelection(.check) }
+    @objc func researchSelection() { fromSelection(.research) }
+
+    @objc func showHistory() {
+        HistoryWindow.show { [weak self] text in
+            self?.panel.show(Check(mode: .research, text: text, image: nil, app: "History"))
+        }
+    }
+
+    func fromSelection(_ mode: Mode) {
         let app = NSWorkspace.shared.frontmostApplication?.localizedName ?? ""
         Task { @MainActor in
             guard let text = await Selection.read(), !text.isEmpty else {
                 panel.show(Check(error: "Select some text first, then press ⌥Space.", app: app))
                 return
             }
-            panel.show(Check(text: String(text.prefix(2000)), image: nil, app: app))
+            panel.show(Check(mode: mode, text: String(text.prefix(mode == .research ? 1500 : 2000)), image: nil, app: app))
         }
     }
 
     @objc func checkRegion() {
         Task { @MainActor in
             guard let png = await Selection.captureRegion() else { return }
-            panel.show(Check(text: "", image: png, app: "Screen"))
+            panel.show(Check(mode: .check, text: "", image: png, app: "Screen"))
         }
     }
 }

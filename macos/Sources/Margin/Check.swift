@@ -4,6 +4,7 @@ import Foundation
 struct Event: Decodable {
     var type: String
     var text: String?
+    var delta: String?
     var claim: Int?
     var claims: [ClaimIn]?
     var endpoint: String?
@@ -11,7 +12,7 @@ struct Event: Decodable {
     var query: String?
     var ms: Int?
     var count: Int?
-    var sources: [SourceIn]?
+    var sources: [Source]?
     var confidence: Int?
     var summary: String?
     var quotes: [Quote]?
@@ -20,12 +21,21 @@ struct Event: Decodable {
     var domain: String?
     var date: String?
     var tavily_calls: Int?
+    var follow_ups: [String]?
     var message: String?
     var model: String?
 }
 
 struct ClaimIn: Decodable { var id: Int; var text: String; var kind: String }
-struct SourceIn: Decodable { var url: String; var domain: String; var side: String; var trusted: Bool }
+struct Source: Decodable, Hashable {
+    var url: String
+    var domain: String
+    var title: String?
+    var side: String?
+    var trusted: Bool?
+    var date: String?
+    var snippet: String?
+}
 struct Quote: Decodable, Hashable { var text: String; var url: String; var domain: String; var date: String? }
 
 struct Verdict { var label: String; var confidence: Int; var summary: String; var quotes: [Quote]; var rejected: Int }
@@ -35,7 +45,7 @@ struct ClaimState: Identifiable {
     var id: Int
     var text: String
     var status = "Searching both sides"
-    var sources: [SourceIn] = []
+    var sources: [Source] = []
     var verdict: Verdict?
     var origin: Origin?
 }
@@ -45,9 +55,13 @@ struct TraceLine: Identifiable {
     var endpoint: String, label: String, query: String, ms: Int, count: Int
 }
 
+enum Mode: String, Codable { case check, research }
+
 @MainActor
 final class Check: ObservableObject {
+    let mode: Mode
     let app: String
+    let date: Date
     @Published var input: String
     @Published var status = "Reading"
     @Published var claims: [ClaimState] = []
@@ -55,29 +69,40 @@ final class Check: ObservableObject {
     @Published var models: [String] = []
     @Published var finished: (calls: Int, ms: Int)?
     @Published var error: String?
+    // Research mode
+    @Published var report = ""
+    @Published var researchSources: [Source] = []
+    @Published var tldr: String?
+    @Published var followUps: [String] = []
+
+    private var rawEvents: [String] = []
     private var task: Task<Void, Never>?
 
     static let server = URL(string: ProcessInfo.processInfo.environment["MARGIN_URL"] ?? "http://127.0.0.1:8787")!
 
     init(error: String, app: String) {
-        self.app = app
-        self.input = ""
+        (mode, self.app, date, input) = (.check, app, Date(), "")
         self.error = error
     }
 
-    init(text: String, image: Data?, app: String) {
-        self.app = app
-        self.input = text
+    init(mode: Mode, text: String, image: Data?, app: String) {
+        (self.mode, self.app, date, input) = (mode, app, Date(), text)
         task = Task { await run(text: text, image: image) }
+    }
+
+    /// Rebuilds a past check from its stored events, without any network call.
+    init(entry: HistoryEntry) {
+        (mode, app, date, input) = (entry.mode, entry.app, entry.date, entry.input)
+        for line in entry.events { decodeAndApply(line) }
     }
 
     func cancel() { task?.cancel() }
 
     private func run(text: String, image: Data?) async {
-        var req = URLRequest(url: Check.server.appendingPathComponent("check"))
+        var req = URLRequest(url: Check.server.appendingPathComponent(mode.rawValue))
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.timeoutInterval = 120
+        req.timeoutInterval = 180
         var body: [String: Any] = ["text": text]
         if let image { body["image_b64"] = image.base64EncodedString() }
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
@@ -88,12 +113,18 @@ final class Check: ObservableObject {
                 return
             }
             for try await line in bytes.lines where line.hasPrefix("data: ") {
-                if let ev = try? JSONDecoder().decode(Event.self, from: Data(line.dropFirst(6).utf8)) { apply(ev) }
+                let json = String(line.dropFirst(6))
+                rawEvents.append(json)
+                decodeAndApply(json)
             }
         } catch is CancellationError {
         } catch {
             self.error = "Can't reach the Margin server at \(Check.server.absoluteString). Start it with ./run.sh."
         }
+    }
+
+    private func decodeAndApply(_ json: String) {
+        if let ev = try? JSONDecoder().decode(Event.self, from: Data(json.utf8)) { apply(ev) }
     }
 
     private func apply(_ ev: Event) {
@@ -120,17 +151,31 @@ final class Check: ObservableObject {
             if let i = ev.claim, let d = ev.domain, let u = ev.url {
                 claims[safe: i]?.origin = Origin(domain: d, url: u, date: String((ev.date ?? "").prefix(16)))
             }
+        case "report":
+            report += ev.delta ?? ""
+            status = "Writing the report"
+        case "research_sources":
+            researchSources = ev.sources ?? []
+        case "tldr":
+            tldr = ev.text
+            followUps = ev.follow_ups ?? []
         case "done":
             finished = (ev.tavily_calls ?? 0, ev.ms ?? 0)
+            if task != nil { HistoryStore.shared.add(self, events: rawEvents) }
         case "error":
             error = ev.message
         default: break
         }
     }
 
+    var labels: [String] { mode == .research ? ["research"] : claims.compactMap { $0.verdict?.label } }
+
     /// Markdown summary for ⌘C, ready to paste in a reply.
     var markdown: String {
-        claims.map { c in
+        if mode == .research {
+            return "**\(input)**\n\n\(tldr.map { "_\($0)_\n\n" } ?? "")\(report)\n\n_Researched with Margin_"
+        }
+        return claims.map { c in
             guard let v = c.verdict else { return "" }
             let src = v.quotes.map { "> \($0.text)\n> — \($0.url)" }.joined(separator: "\n")
             return "**\(Style.word(v.label))** (\(v.confidence)%): \(c.text)\n\(v.summary)\n\(src)"
