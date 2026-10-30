@@ -4,7 +4,7 @@
 
 **Highlight anything on your Mac. Proofmark tells you if it's true, and digs deeper when you want more.**
 
-Select a sentence in any app (Slack, Mail, Safari, a PDF, Notes) and press **⌥Space**. A glass panel opens next to your cursor. In a few seconds the claim gets marked with a highlighter colour for its verdict, followed by the exact quotes that prove it, every source it read, and the earliest coverage it found. One click turns any claim into a full research brief.
+Select a sentence and press **⌥Space**. Proofmark reads the selection from whichever app has focus. A glass panel opens next to your cursor. In a few seconds the claim gets marked with a highlighter colour for its verdict, followed by the exact quotes that prove it, every source it read, and the earliest coverage it found. One click turns any claim into a full research brief.
 
 Built for the **Nebius × NVIDIA Global AI Hackathon**, track **Best Apps and Agents**.
 Powered by **NVIDIA Nemotron** on **Nebius Token Factory**, and by **Tavily** for every piece of evidence.
@@ -111,16 +111,16 @@ Each step gets the right size of model, as the track suggests. All calls go thro
 | Step | Model | Measured | Why |
 |---|---|---|---|
 | Split claims, write confirm/debunk queries | Nemotron 3 Nano 30B | 0.8s | Runs on every check, must be instant |
-| TL;DR + follow-up questions for research | Nemotron 3 Nano 30B | <1s | Short structured summary |
+| TL;DR + follow-up questions for research | Nemotron 3 Nano 30B | not measured | Short structured summary |
 | Read screenshots | Nemotron 3.5 Super VL | 2.4s | Vision: transcribes claims, ignores UI chrome |
-| Judge the evidence | Nemotron 3 Ultra 550B | ~1.2s | Strongest reasoning for the step that decides the verdict |
+| Judge the evidence | Nemotron 3 Ultra 550B | ~2s | Strongest reasoning for the step that decides the verdict |
 
 Model IDs are auto-detected from the Token Factory model list, or can be pinned in `.env` (`MODEL_FAST`, `MODEL_JUDGE`, `MODEL_VISION`).
 
 ### Where Token Factory sped us up
 
 - **One client, every model size.** Moving a step from Nano to Super to Ultra was a one-line change, so we benchmarked each step during the hackathon instead of guessing.
-- **Reasoning switch + JSON mode.** With `chat_template_kwargs: {"enable_thinking": false}` and `response_format: json_object`, Ultra judges six sources in about 1.2s, against 3 to 13s with reasoning traces on, and it never returned malformed JSON. The biggest model became the fastest way to get a verdict.
+- **Reasoning switch + JSON mode.** `chat_template_kwargs: {"enable_thinking": false}` took Nano from 4.0s to 0.8s and Super from about 3s to about 1.6s on the same prompts. With it and `response_format: json_object`, Ultra answered a short judging test in 1.2s (about 2s in the full pipeline), and JSON mode fixed the malformed output we had seen. So the deciding step could use the biggest model.
 - **Vision on the same API.** The screenshot feature needed no extra provider: the same client calls Nemotron 3.5 Super VL with an image.
 
 ### Nebius services used
