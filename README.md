@@ -9,6 +9,8 @@ Select a sentence and press **⌥Space**. Proofmark reads the selection from whi
 Built for the **Nebius × NVIDIA Global AI Hackathon**, track **Best Apps and Agents**.
 Powered by **NVIDIA Nemotron** on **Nebius Token Factory**, and by **Tavily** for every piece of evidence.
 
+**[Watch the demo video](https://youtu.be/L16wNqHwLQA)** · **[Download the macOS test build](https://github.com/NoeGRANGE/fact-checker/releases/tag/v0.1.0)**
+
 | Shortcut | What it does |
 |---|---|
 | **⌥Space** | Fact-check the selected text |
