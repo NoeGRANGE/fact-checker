@@ -34,6 +34,11 @@ TRUSTED = (".gov", ".gouv.fr", ".edu", ".int", ".europa.eu", "nih.gov", "who.int
 NO_TEXT = ("youtube.com", "youtu.be", "tiktok.com", "instagram.com", "facebook.com", "x.com", "twitter.com")
 
 
+def search_topic(claim):
+    """The model sometimes invents topics like "history", which Tavily rejects with a 400."""
+    return claim.get("topic") if claim.get("topic") in ("general", "news", "finance") else "general"
+
+
 async def resolve_models():
     if all(MODELS.values()):
         return MODELS
@@ -177,7 +182,7 @@ async def check(text, image_b64=None, emit=None):
             await send({"type": "verdict", "claim": cid, "label": "unverifiable", "confidence": 0,
                         "summary": "This is an opinion, not a checkable fact.", "quotes": [], "rejected": 0})
             return
-        common = {"search_depth": "advanced", "max_results": 5, "topic": c.get("topic", "general"),
+        common = {"search_depth": "advanced", "max_results": 5, "topic": search_topic(c),
                   "chunks_per_source": 3}
         if c.get("recent"):
             common["time_range"] = "year"

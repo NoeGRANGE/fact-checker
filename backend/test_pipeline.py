@@ -1,4 +1,4 @@
-from proofmark.pipeline import best_passages, norm, quote_found
+from proofmark.pipeline import best_passages, norm, quote_found, search_topic
 
 src = norm("Brain imaging shows that virtually all regions of the brain are active over a day. The 10% myth is false.")
 assert quote_found("virtually all regions of the brain are active over a day", src)
@@ -7,4 +7,7 @@ assert not quote_found("only 10% of the brain is ever active", src)
 assert not quote_found("short", src)
 assert best_passages("cats are nice and fluffy animals indeed, everyone agrees on that one\nthe human brain uses far more than ten percent of its neurons daily",
                      "humans use 10% of their brain", n=1)[0].startswith("the human brain")
+assert search_topic({"topic": "history"}) == "general"
+assert search_topic({"topic": "news"}) == "news"
+assert search_topic({}) == "general"
 print("ok")
